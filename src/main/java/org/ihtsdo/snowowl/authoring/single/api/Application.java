@@ -1,16 +1,20 @@
 package org.ihtsdo.snowowl.authoring.single.api;
 
-import static com.google.common.base.Predicates.not;
-import static springfox.documentation.builders.PathSelectors.regex;
-
-import java.util.TimeZone;
-
+import com.ecwid.consul.v1.ConsulClient;
+import com.ecwid.consul.v1.ConsulRawClient;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
+import com.google.common.base.Charsets;
+import io.kaicode.rest.util.branchpathrewrite.BranchPathUriRewriteFilter;
 import org.ihtsdo.otf.rest.client.terminologyserver.SnowOwlRestClientFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.cloud.consul.ConsulProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
@@ -19,18 +23,15 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
-import com.google.common.base.Charsets;
-
-import io.kaicode.rest.util.branchpathrewrite.BranchPathUriRewriteFilter;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
+import java.util.TimeZone;
+
+import static com.google.common.base.Predicates.not;
+import static springfox.documentation.builders.PathSelectors.regex;
 
 @SpringBootApplication
 @ImportResource("classpath:services-context.xml")
@@ -38,6 +39,15 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableSwagger2
 @EnableScheduling
 public class Application {
+
+	@Bean
+	public ConsulClient consulClient(ConsulProperties consulProperties, @Value("${spring.cloud.consul.path}") String path) {
+		return new ConsulClient(ConsulRawClient.Builder.builder()
+				.setHost(consulProperties.getHost())
+				.setPort(consulProperties.getPort())
+				.setPath(path)
+				.build());
+	}
 
 	@Bean
 	public SnowOwlRestClientFactory snowOwlRestClientFactory(@Value("${snowowl.url}") String snowOwlUrl,
