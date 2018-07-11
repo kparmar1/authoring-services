@@ -1,7 +1,9 @@
 package org.ihtsdo.snowowl.authoring.scheduler.api.service;
 
 import java.util.List;
+import java.util.UUID;
 
+import org.ihtsdo.otf.rest.exception.BusinessServiceException;
 import org.snomed.otf.scheduler.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -16,12 +18,12 @@ public interface ScheduleService {
 	
 	public List<JobRun> listJobsRun(String typeName, String jobName, String user);
 
-	public JobRun runJob(String jobType, String jobName, JobRun jobRun);
+	public JobRun runJob(String jobType, String jobName, JobRun jobRun) throws BusinessServiceException;
 
 	public JobSchedule scheduleJob(String jobType, String jobName, JobSchedule jobSchedule);
 
-	public JobSchedule deleteSchedule(String jobType, String jobName, String scheduleId);
+	public void deleteSchedule(String jobType, String jobName, String scheduleId);
 
-	public JobRun getJobStatus(String typeName, String jobName, String runId);
+	public JobRun getJobRun(String typeName, String jobName, UUID runId);
 
 }

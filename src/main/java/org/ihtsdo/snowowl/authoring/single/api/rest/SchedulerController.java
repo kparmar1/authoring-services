@@ -9,6 +9,7 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Api("Authoring Projects")
 @RestController
@@ -53,7 +54,7 @@ public class SchedulerController {
 	@RequestMapping(value="/jobs/{typeName}/{jobName}/runs", method= RequestMethod.GET)
 	public List<JobRun> listJobsRun(@PathVariable final String typeName,
 			@PathVariable final String jobName,
-			@PathVariable(required=false) final String user) throws BusinessServiceException {
+			@RequestParam(required=false) final String user) throws BusinessServiceException {
 		return scheduleService.listJobsRun(typeName, jobName, user);
 	}
 	
@@ -84,10 +85,10 @@ public class SchedulerController {
 			@ApiResponse(code = 200, message = "OK")
 	})
 	@RequestMapping(value="/jobs/{typeName}/{jobName}/schedule/{scheduleId}", method= RequestMethod.DELETE)
-	public JobSchedule deleteSchedule(@PathVariable final String jobType, 
+	public void deleteSchedule(@PathVariable final String jobType, 
 			@PathVariable final String jobName,
 			@PathVariable final String scheduleId) throws BusinessServiceException {
-		return scheduleService.deleteSchedule(jobType, jobName, scheduleId);
+		scheduleService.deleteSchedule(jobType, jobName, scheduleId);
 	}
 	
 	@ApiOperation(value="List jobs run")
@@ -97,8 +98,8 @@ public class SchedulerController {
 	@RequestMapping(value="/jobs/{typeName}/{jobName}/runs/{runId}", method= RequestMethod.GET)
 	public JobRun getJobStatus(@PathVariable final String typeName,
 			@PathVariable final String jobName,
-			@PathVariable final String runId) throws BusinessServiceException {
-		return scheduleService.getJobStatus(typeName, jobName, runId);
+			@PathVariable final UUID runId) throws BusinessServiceException {
+		return scheduleService.getJobRun(typeName, jobName, runId);
 	}
 
 }
