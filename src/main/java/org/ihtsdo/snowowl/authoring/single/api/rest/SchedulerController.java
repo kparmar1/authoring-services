@@ -91,7 +91,7 @@ public class SchedulerController {
 		scheduleService.deleteSchedule(jobType, jobName, scheduleId);
 	}
 	
-	@ApiOperation(value="List jobs run")
+	@ApiOperation(value="Get job run")
 	@ApiResponses({
 			@ApiResponse(code = 200, message = "OK")
 	})

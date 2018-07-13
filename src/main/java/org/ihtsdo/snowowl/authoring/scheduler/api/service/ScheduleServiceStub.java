@@ -101,6 +101,9 @@ public class ScheduleServiceStub implements ScheduleService {
 				//Complete all running jobs
 				run.setResult(resultURL);
 				run.setStatus(JobStatus.Complete);
+				if (run.getResultTime()==null) {
+					run.setResultTime(new Date());
+				}
 				return run;
 			}
 		}
