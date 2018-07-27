@@ -204,19 +204,16 @@ public class ProjectController {
 											  @RequestBody MergeRequest mergeRequest) throws BusinessServiceException {
 		String taskBranchPath = taskService.getTaskBranchPathUsingCache(projectKey, taskKey);
 		return branchService.mergeBranchAsync(taskBranchPath, PathHelper.getParentPath(taskBranchPath), mergeRequest.getSourceReviewId())
-							.thenApply(merge -> {
-								try {
-									return promoteTask(merge, projectKey, taskKey);
-								} catch (BusinessServiceException e) {
-									e.printStackTrace();
-								}
-								return null;
-							});
+							.thenApply(merge -> promoteTask(merge, projectKey, taskKey));
 	}
 	
-	private ResponseEntity<String> promoteTask(Merge merge, String projectKey, String taskKey) throws BusinessServiceException {
+	private ResponseEntity<String> promoteTask(Merge merge, String projectKey, String taskKey) {
 		if (merge.getStatus() == Merge.Status.COMPLETED) {
-			taskService.stateTransition(projectKey, taskKey, TaskStatus.PROMOTED);
+			try {
+				taskService.stateTransition(projectKey, taskKey, TaskStatus.PROMOTED);
+			} catch (BusinessServiceException e) {
+				e.printStackTrace();
+			}
 			notificationService.queueNotification(ControllerHelper.getUsername(),
 					new Notification(projectKey, taskKey, EntityType.Promotion, "Task successfully promoted"));
 		}
