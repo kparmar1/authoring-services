@@ -1,22 +1,26 @@
 package org.ihtsdo.snowowl.authoring.single.api.service;
 
-import com.google.common.collect.Lists;
+import static org.ihtsdo.otf.rest.client.snowowl.pojo.Merge.Status.IN_PROGRESS;
+import static org.ihtsdo.otf.rest.client.snowowl.pojo.Merge.Status.SCHEDULED;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import org.ihtsdo.otf.rest.client.RestClientException;
 import org.ihtsdo.otf.rest.client.snowowl.SnowOwlRestClient;
 import org.ihtsdo.otf.rest.client.snowowl.SnowOwlRestClientFactory;
 import org.ihtsdo.otf.rest.client.snowowl.pojo.Branch;
 import org.ihtsdo.otf.rest.client.snowowl.pojo.Merge;
 import org.ihtsdo.otf.rest.exception.BusinessServiceException;
+import org.ihtsdo.snowowl.authoring.single.api.configuration.AsyncConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import static org.ihtsdo.otf.rest.client.snowowl.pojo.Merge.Status.IN_PROGRESS;
-import static org.ihtsdo.otf.rest.client.snowowl.pojo.Merge.Status.SCHEDULED;
+import com.google.common.collect.Lists;
 
 public class BranchService {
 	
@@ -108,7 +112,39 @@ public class BranchService {
 			throw new BusinessServiceException("Failed to start merge.", e);
 		}
 	}
+	
+	@Async(AsyncConfiguration.TASK_EXECUTOR_SERVICE)
+	public CompletableFuture<Merge> mergeBranchAsync(String sourcePath, String targetPath, String reviewId) throws BusinessServiceException {
+		Logger logger = LoggerFactory.getLogger(getClass());
+		logger.info("Attempting branch merge from '{}' to '{}'", sourcePath, targetPath);
+		try {
+			SnowOwlRestClient client = snowOwlRestClientFactory.getClient();
+			String mergeId = client.startMerge(sourcePath, targetPath, reviewId);
+			Merge merge;
+			int sleepSeconds = 4;
+			int totalWait = 0;
+			int maxTotalWait = 60 * 60;
+			try {
+				do {
+					Thread.sleep(1000 * sleepSeconds);
+					totalWait += sleepSeconds;
+					merge = client.getMerge(mergeId);
+					if (sleepSeconds < 10) {
+						sleepSeconds+=2;
+					}
+				} while (totalWait < maxTotalWait && (merge.getStatus() == SCHEDULED || merge.getStatus() == IN_PROGRESS));
 
+				logger.info("Branch merge from '{}' to '{}' end status is {} {}", sourcePath, targetPath, merge.getStatus(), merge.getApiError() == null ? "" : merge.getApiError());
+				return CompletableFuture.completedFuture(merge);
+
+			} catch (InterruptedException | RestClientException e) {
+				throw new BusinessServiceException("Failed to fetch merge status.", e);
+			}
+		} catch (RestClientException e) {
+			throw new BusinessServiceException("Failed to start merge.", e);
+		}
+	}
+	
 	private List<String> getBranchPathStack(String path) {
 		List<String> paths = new ArrayList<>();
 		paths.add(path);
