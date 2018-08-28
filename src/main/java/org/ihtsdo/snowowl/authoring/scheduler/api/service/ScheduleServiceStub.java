@@ -12,13 +12,15 @@ public class ScheduleServiceStub implements ScheduleService {
 	
 	private static final String TYPE_REPORT = "Report";
 	private static final String JOB_CS = "Case Sensitivity";
+	private static final String JOB_IA = "Initial Analysis";
+	private static final String JOB_AAP = "Attributes as Parents";
 	private URL resultURL;
 	
 	Map<String, JobType> jobTypes = new HashMap<>();
 	Map<Job, List<JobRun>> jobRuns = new HashMap<>();
 	
 	public ScheduleServiceStub() throws MalformedURLException {
-		resultURL = new URL ("https://docs.google.com/spreadsheets/d/1kLPbzaF05H0sg22wPL8NHp1mfd5MlUW7Uqfh-87wSDY/edit#gid=0");
+		resultURL = new URL ("https://docs.google.com/spreadsheets/d/1OkNqnFmjNhe5IOcoCmK4P3-1uEHqWO0Xf1mq0mya-PE/edit");
 		createDummyData();
 	}
 
@@ -124,11 +126,22 @@ public class ScheduleServiceStub implements ScheduleService {
 	
 	private void createJobs() {
 		String[] params = new String[] { "subHierarchy", "project" };
-		Job csReport = new Job ("Case Sensitivity", "Produces a list of...", params);
-		JobCategory qaReports = new JobCategory("QA");
+		
+		Job qiReport = new Job (JOB_IA, "Produces tabs to show intermediate primitives and counts for attribute type occurrance.", params);
+		JobCategory qiReports = new JobCategory("Quality Improvement");
+		qiReports.addJob(qiReport);
+		
+		JobCategory qaReports = new JobCategory("General QA");
+		Job csReport = new Job (JOB_CS, "Produces a list of terms which appear to have an incorrect case sensitivity setting.", params);
+		
+		params = new String[] { "AttributeType", "project" };
+		Job aapReport = new Job (JOB_AAP, "For a given attribute type, produces a list of concepts which have the same concept as an attribute value and parent. For example, 'Is Modification Of'.", params);
 		qaReports.addJob(csReport);
+		qaReports.addJob(aapReport);
+		
 		JobType reports = new JobType(TYPE_REPORT);
 		reports.addCategory(qaReports);
+		reports.addCategory(qiReports);
 		jobTypes.put(reports.getName(), reports);
 	}
 	
@@ -136,16 +149,51 @@ public class ScheduleServiceStub implements ScheduleService {
 		
 		JobRun scheduledJob = JobRun.create(JOB_CS, "system");
 		scheduledJob.setStatus(JobStatus.Scheduled);
+		populateParameter(scheduledJob, "subHierarchy", "105590001 |Substance (substance)|");
+		populateParameter(scheduledJob, "Project", "SUBST2019");
 		
 		JobRun completeJob = JobRun.create(JOB_CS, "system");
 		completeJob.setStatus(JobStatus.Complete);
-		completeJob.setResult(resultURL);
-	
+		completeJob.setResult(new URL("https://docs.google.com/spreadsheets/d/1OkNqnFmjNhe5IOcoCmK4P3-1uEHqWO0Xf1mq0mya-PE/edit"));
+		populateParameter(completeJob, "SubHierarchy", "105590001 |Substance (substance)|");
+		populateParameter(completeJob, "Project", "SUBST2019");
+		
 		List <JobRun> csRuns = new ArrayList<>();
 		csRuns.add(scheduledJob);
 		csRuns.add(completeJob);
-		
 		Job csJob = getJob(TYPE_REPORT, JOB_CS);
 		jobRuns.put(csJob, csRuns);
+		
+		JobRun completeQIJob = JobRun.create(JOB_IA, "jcase");
+		completeQIJob.setStatus(JobStatus.Complete);
+		completeQIJob.setResult(new URL("https://docs.google.com/spreadsheets/d/1HMtHqUaIP-DTKbt-7Jae8lrCf9SzP7QlK8DDwu00nZ8/edit#gid=0"));
+		populateParameter(completeQIJob, "Project", "QI2018");
+		
+		List <JobRun> iaRuns = new ArrayList<>();
+		iaRuns.add(completeQIJob);
+		Job iaJob = getJob(TYPE_REPORT, JOB_IA);
+		jobRuns.put(iaJob, iaRuns);
+		
+		JobRun completeAAPJob = JobRun.create(JOB_AAP, "tmorrison");
+		completeAAPJob.setStatus(JobStatus.Complete);
+		completeAAPJob.setResult(new URL("https://docs.google.com/spreadsheets/d/1pXOQNEnSnSra2nISCG9eGcfsHuLewfjEWqUiSLz-6b4/edit"));
+		populateParameter(completeAAPJob, "AttributeType", "738774007 |Is modification of (attribute)|");
+		
+		List <JobRun> aapRuns = new ArrayList<>();
+		aapRuns.add(completeAAPJob);
+		Job aapJob = getJob(TYPE_REPORT, JOB_AAP);
+		jobRuns.put(aapJob, aapRuns);
+	}
+
+	private void populateParameter(JobRun jobRun, String key, String value) {
+		List<JobParameter> params = jobRun.getParameters();
+		if (params == null) {
+			params = new ArrayList<>();
+			jobRun.setParameters(params);
+		}
+		JobParameter param = new JobParameter();
+		param.setKey(key);
+		param.setValue(value);
+		params.add(param);
 	}
 }
