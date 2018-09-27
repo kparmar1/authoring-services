@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.google.common.base.Charsets;
 import io.kaicode.rest.util.branchpathrewrite.BranchPathUriRewriteFilter;
 import org.ihtsdo.otf.rest.client.snowowl.SnowOwlRestClientFactory;
+import org.ihtsdo.snowowl.authoring.scheduler.api.service.ScheduleServiceStub;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -24,6 +25,7 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import java.net.MalformedURLException;
 import java.util.TimeZone;
 
 import static com.google.common.base.Predicates.not;
@@ -74,6 +76,11 @@ public class Application {
 		return new FilterRegistrationBean(new BranchPathUriRewriteFilter(
 				"/loinc-export/(.*)"
 		));
+	}
+
+	@Bean
+	public ScheduleServiceStub getScheduleService() throws MalformedURLException {
+		return new ScheduleServiceStub();
 	}
 
 	// Swagger Config
