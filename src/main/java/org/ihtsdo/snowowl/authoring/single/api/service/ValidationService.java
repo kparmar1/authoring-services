@@ -40,6 +40,7 @@ public class ValidationService {
 	public static final String STATUS_COMPLETE = "COMPLETED";
 	public static final String STATUS_NOT_TRIGGERED = "NOT_TRIGGERED";
 	public static final String ASSERTION_GROUP_NAMES = "assertionGroupNames";
+	public static final String RVF_DROOLS_ASSERTION_GROUP_NAMES = "rvfDroolsAssertionGroupNames";
 	public static final String PREVIOUS_RELEASE = "previousRelease";
 	public static final String DEPENDENCY_RELEASE = "dependencyRelease";
 	public static final String SHORT_NAME ="shortname";
@@ -124,6 +125,7 @@ public class ValidationService {
 			final Map<String, Object> mergedBranchMetadata = branchService.getBranchMetadataIncludeInherited(path);
 			Map<String, Object> properties = new HashMap<>();
 			copyProperty(ASSERTION_GROUP_NAMES, mergedBranchMetadata, properties);
+			copyProperty(RVF_DROOLS_ASSERTION_GROUP_NAMES, mergedBranchMetadata, properties);
 			copyProperty(PREVIOUS_RELEASE, mergedBranchMetadata, properties);
 			copyProperty(DEPENDENCY_RELEASE, mergedBranchMetadata, properties);
 			copyProperty(SHORT_NAME, mergedBranchMetadata, properties);
