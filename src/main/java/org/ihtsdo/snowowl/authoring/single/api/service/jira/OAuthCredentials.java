@@ -14,7 +14,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.BASE64Decoder;
+import org.springframework.security.crypto.codec.Base64;
 
 import java.io.*;
 import java.net.URI;
@@ -163,7 +163,7 @@ public class OAuthCredentials implements ICredentials {
 			int endIndex = privateKeyString.indexOf(END_PRIVATE_KEY);
 			privateKeyString = privateKeyString.substring(startIndex + BEGIN_PRIVATE_KEY.length(), endIndex);
 			// decode private key
-			PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec((new BASE64Decoder()).decodeBuffer(privateKeyString));
+			PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(Base64.decode(privateKeyString.getBytes()));
 			return KeyFactory.getInstance(RSA).generatePrivate(privSpec);
 		} else {
 			throw new IOException("Unexpected private key format. File should contain " + BEGIN_PRIVATE_KEY);
